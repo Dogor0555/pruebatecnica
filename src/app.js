@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 
 const db = require('./db/connection');
@@ -15,6 +16,14 @@ async function buildApp({ dbOptions } = {}) {
   await db.init(dbOptions || {});
 
   const app = express();
+
+  app.use(
+    cors({
+      origin: true,
+      credentials: false,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    })
+  );
 
   app.use(express.json());
 
