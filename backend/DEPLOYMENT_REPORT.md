@@ -387,7 +387,3 @@ curl -X DELETE https://task-api-12bt.onrender.com/api/tasks/1
 - **Owner:** Dogor0555
 - **Ramas activas:** `main`, `feature/tasks-api`, `feature/frontend-and-docker-compose`, `refactor/backend-folder`
 - **Historial:** 8 commits en `main`, todos con mensajes descriptivos
-
----
-
-*Generado el 2026-09-04 tras el despliegue exitoso en Render (commit `02cc291`).*

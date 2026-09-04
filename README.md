@@ -34,17 +34,25 @@ API REST y cliente web para la gestión de tareas (Tasks) — examen práctico d
 │   │   ├── routes/                # Definición de rutas + anotaciones OpenAPI
 │   │   ├── middlewares/           # 400/404/500 centralizados
 │   │   └── errors.js
-│   ├── tests/                     # Suite Jest + Supertest
-│   ├── Dockerfile
+│   ├── tests/                     # Suite Jest + Supertest (16 casos)
+│   ├── DEPLOYMENT_REPORT.md       # Informe extendido de despliegue
+│   ├── scripts/md-to-pdf.js       # Generador de PDF del informe
 │   └── package.json
 ├── frontend/                      # Cliente web Next.js (TS + App Router)
 │   ├── app/                       # Páginas y layout
-│   ├── components/                # TaskForm, TaskList, TaskItem
+│   ├── components/                # TaskForm, TaskList, TaskItem (con edición)
 │   ├── lib/api.ts                 # Cliente HTTP
 │   ├── types/task.ts              # Tipos compartidos
-│   ├── Dockerfile
+│   ├── Dockerfile                 # Dockerfile específico del frontend
 │   └── package.json
-├── docker-compose.yml             # Orquestación backend + frontend
+├── Dockerfile                     # Dockerfile del backend (raíz, usado por Render)
+├── .dockerignore
+├── render.yaml                    # Render Blueprint (Infrastructure as Code)
+├── docker-compose.yml             # Orquestación local backend + frontend
+├── DEPLOYMENT.md                  # Informe breve de despliegue
+├── .github/workflows/
+│   ├── ci.yml                     # Tests en cada push
+│   └── keepalive.yml              # Anti cold start en plan Free
 └── README.md
 ```
 
