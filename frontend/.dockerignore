@@ -1,0 +1,15 @@
+node_modules
+.next
+.turbo
+out
+build
+dist
+coverage
+.git
+.github
+.env
+.env.local
+README.md
+Dockerfile
+.dockerignore
+*.md

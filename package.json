@@ -1,7 +1,7 @@
 {
   "name": "tasks-api",
   "version": "1.0.0",
-  "description": "REST API para gestión de tareas (Tasks). Node.js + Express + SQLite.",
+  "description": "REST API para gestión de tareas (Tasks). Node.js + Express + Postgres (Neon).",
   "main": "src/server.js",
   "scripts": {
     "start": "node -r dotenv/config src/server.js",
@@ -30,6 +30,7 @@
     ]
   },
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "pg": "^8.13.0",
