@@ -1,0 +1,23 @@
+# Render Blueprint — infraestructura como código
+# Crea el Web Service del backend leyendo este archivo.
+# Uso: Render Dashboard → New + → Blueprint → apunta a este repo.
+
+services:
+  - type: web
+    name: tasks-api
+    runtime: docker
+    rootDir: backend
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false   # se debe configurar manualmente como secret en Render
+      - key: PORT
+        value: "3000"
+      - key: NODE_ENV
+        value: production

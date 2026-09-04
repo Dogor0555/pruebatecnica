@@ -1,0 +1,22 @@
+name: Keep Render warm
+
+on:
+  schedule:
+    # Cada 14 minutos para evitar el cold start del plan free de Render
+    - cron: "*/14 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoint
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: |
+          if [ -z "$BACKEND_URL" ]; then
+            echo "BACKEND_URL no está definido como secret. Saltando."
+            exit 0
+          fi
+          echo "Pinging $BACKEND_URL/health"
+          curl -fsS "$BACKEND_URL/health" || echo "Ping failed (continúa)"

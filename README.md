@@ -214,6 +214,20 @@ Tests:       13 passed, 13 total
 2. `cd backend && npm ci`.
 3. `npm test` (necesita el secreto `TEST_DATABASE_URL` en *Settings → Secrets → Actions*).
 
+Hay un segundo workflow `.github/workflows/keepalive.yml` que hace ping a `/health` cada 14 min para evitar el cold start del backend en Render (configurable vía secret `BACKEND_URL`).
+
+---
+
+## 🚀 Despliegue
+
+La guía paso a paso para desplegar en **Vercel + Render + Neon** (todo free) está en **[DEPLOYMENT.md](./DEPLOYMENT.md)**. Cubre:
+
+- Crear el servicio en Render con `render.yaml` o manualmente.
+- Crear el proyecto en Vercel apuntando a `frontend/`.
+- Configurar `DATABASE_URL` y `NEXT_PUBLIC_API_URL`.
+- Anti cold-start con GitHub Actions o UptimeRobot.
+- Troubleshooting de los errores más comunes.
+
 ---
 
 ## 📜 Historial de commits
