@@ -4,9 +4,9 @@
   "description": "REST API para gestión de tareas (Tasks). Node.js + Express + SQLite.",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "test": "jest --runInBand --detectOpenHandles --forceExit"
+    "start": "node -r dotenv/config src/server.js",
+    "dev": "node -r dotenv/config --watch src/server.js",
+    "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit"
   },
   "engines": {
     "node": ">=18"
@@ -16,17 +16,28 @@
     "api",
     "tasks",
     "express",
-    "sqlite"
+    "postgres",
+    "neon"
   ],
   "author": "Marcos Bonilla",
   "license": "MIT",
+  "jest": {
+    "testEnvironment": "node",
+    "globalSetup": "<rootDir>/tests/globalSetup.js",
+    "globalTeardown": "<rootDir>/tests/globalTeardown.js",
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ]
+  },
   "dependencies": {
-    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "pg": "^8.13.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "supertest": "^7.0.0"
   }

@@ -44,17 +44,17 @@ function validateTaskInput(body, { partial = false } = {}) {
   }
 }
 
-function listTasks() {
+async function listTasks() {
   return repo.findAll();
 }
 
-function getTask(id) {
-  const task = repo.findById(id);
+async function getTask(id) {
+  const task = await repo.findById(id);
   if (!task) throw new NotFoundError(`No existe una tarea con id ${id}.`);
   return task;
 }
 
-function createTask(body) {
+async function createTask(body) {
   validateTaskInput(body, { partial: false });
   return repo.create({
     title: body.title.trim(),
@@ -63,10 +63,10 @@ function createTask(body) {
   });
 }
 
-function updateTask(id, body) {
+async function updateTask(id, body) {
   validateTaskInput(body, { partial: true });
 
-  const exists = repo.findById(id);
+  const exists = await repo.findById(id);
   if (!exists) throw new NotFoundError(`No existe una tarea con id ${id}.`);
 
   return repo.update(id, {
@@ -78,8 +78,8 @@ function updateTask(id, body) {
   });
 }
 
-function deleteTask(id) {
-  const removed = repo.remove(id);
+async function deleteTask(id) {
+  const removed = await repo.remove(id);
   if (!removed) throw new NotFoundError(`No existe una tarea con id ${id}.`);
 }
 

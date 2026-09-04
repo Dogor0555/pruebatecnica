@@ -6,10 +6,13 @@ const swaggerUi = require('swagger-ui-express');
 const db = require('./db/connection');
 const tasksRouter = require('./routes/tasks.routes');
 const swaggerSpec = require('./config/swagger');
-const { notFoundHandler, errorHandler } = require('./middlewares/error-handler');
+const {
+  notFoundHandler,
+  errorHandler,
+} = require('./middlewares/error-handler');
 
-function buildApp({ dbOptions } = {}) {
-  db.init(dbOptions || {});
+async function buildApp({ dbOptions } = {}) {
+  await db.init(dbOptions || {});
 
   const app = express();
 

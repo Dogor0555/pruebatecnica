@@ -6,9 +6,22 @@ function ok(res, data, status = 200) {
   return res.status(status).json(data);
 }
 
+function parseId(raw) {
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  return id;
+}
+
+function sendInvalidId(res, raw) {
+  return res.status(400).json({
+    error: 'ID inválido',
+    message: `El parámetro "id" debe ser un entero positivo. Se recibió: ${raw}`,
+  });
+}
+
 async function getAll(_req, res, next) {
   try {
-    const tasks = service.listTasks();
+    const tasks = await service.listTasks();
     return ok(res, { data: tasks, count: tasks.length });
   } catch (err) {
     next(err);
@@ -17,14 +30,9 @@ async function getAll(_req, res, next) {
 
 async function getById(req, res, next) {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({
-        error: 'ID inválido',
-        message: `El parámetro "id" debe ser un entero positivo. Se recibió: ${req.params.id}`,
-      });
-    }
-    const task = service.getTask(id);
+    const id = parseId(req.params.id);
+    if (id === null) return sendInvalidId(res, req.params.id);
+    const task = await service.getTask(id);
     return ok(res, { data: task });
   } catch (err) {
     next(err);
@@ -33,7 +41,7 @@ async function getById(req, res, next) {
 
 async function create(req, res, next) {
   try {
-    const task = service.createTask(req.body);
+    const task = await service.createTask(req.body);
     return ok(res, { data: task }, 201);
   } catch (err) {
     next(err);
@@ -42,14 +50,9 @@ async function create(req, res, next) {
 
 async function update(req, res, next) {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({
-        error: 'ID inválido',
-        message: `El parámetro "id" debe ser un entero positivo. Se recibió: ${req.params.id}`,
-      });
-    }
-    const task = service.updateTask(id, req.body);
+    const id = parseId(req.params.id);
+    if (id === null) return sendInvalidId(res, req.params.id);
+    const task = await service.updateTask(id, req.body);
     return ok(res, { data: task });
   } catch (err) {
     next(err);
@@ -58,14 +61,9 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({
-        error: 'ID inválido',
-        message: `El parámetro "id" debe ser un entero positivo. Se recibió: ${req.params.id}`,
-      });
-    }
-    service.deleteTask(id);
+    const id = parseId(req.params.id);
+    if (id === null) return sendInvalidId(res, req.params.id);
+    await service.deleteTask(id);
     return res.status(204).send();
   } catch (err) {
     next(err);

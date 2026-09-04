@@ -1,53 +1,76 @@
 'use strict';
 
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+require('dotenv').config();
 
-let dbInstance = null;
+const { Pool } = require('pg');
 
-function getDataDir() {
-  const configured = process.env.DATA_DIR;
-  if (configured) return configured;
-  const dir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  return dir;
-}
+let pool = null;
 
-function init({ filename = null, inMemory = false } = {}) {
-  const dbFile =
-    filename ||
-    (inMemory ? ':memory:' : path.join(getDataDir(), 'tasks.db'));
+function buildPool({ connectionString, ssl } = {}) {
+  const url =
+    connectionString ||
+    process.env.DATABASE_URL ||
+    process.env.TEST_DATABASE_URL;
 
-  const instance = new Database(dbFile);
-  instance.pragma('journal_mode = WAL');
-  instance.pragma('foreign_keys = ON');
-
-  instance.exec(`
-    CREATE TABLE IF NOT EXISTS tasks (
-      id           INTEGER PRIMARY KEY AUTOINCREMENT,
-      title        TEXT    NOT NULL,
-      description  TEXT    NOT NULL DEFAULT '',
-      isCompleted  INTEGER NOT NULL DEFAULT 0,
-      createdAt    TEXT    NOT NULL DEFAULT (datetime('now')),
-      updatedAt    TEXT    NOT NULL DEFAULT (datetime('now'))
+  if (!url) {
+    throw new Error(
+      'No se ha definido ninguna URL de Postgres. Define DATABASE_URL o TEST_DATABASE_URL en el archivo .env.'
     );
-  `);
-
-  dbInstance = instance;
-  return instance;
-}
-
-function getDb() {
-  if (!dbInstance) init();
-  return dbInstance;
-}
-
-function close() {
-  if (dbInstance) {
-    dbInstance.close();
-    dbInstance = null;
   }
+
+  const useSsl =
+    ssl !== undefined
+      ? ssl
+      : url.includes('sslmode=require') ||
+        url.includes('ssl=true') ||
+        process.env.PGSSL === 'true';
+
+  return new Pool({
+    connectionString: url,
+    ssl: useSsl ? { rejectUnauthorized: false } : false,
+    max: 10,
+    idleTimeoutMillis: 30000,
+  });
 }
 
-module.exports = { init, getDb, close };
+const SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS tasks (
+    id           SERIAL       PRIMARY KEY,
+    title        TEXT         NOT NULL,
+    description  TEXT         NOT NULL DEFAULT '',
+    is_completed BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  );
+`;
+
+async function init(options = {}) {
+  if (pool) return pool;
+
+  pool = buildPool(options);
+
+  await pool.query(SCHEMA_SQL);
+  return pool;
+}
+
+function getPool() {
+  if (!pool) {
+    throw new Error(
+      'La conexión a Postgres no ha sido inicializada. Llama a db.init() primero.'
+    );
+  }
+  return pool;
+}
+
+async function reset() {
+  if (!pool) return;
+  await pool.query('TRUNCATE TABLE tasks RESTART IDENTITY');
+}
+
+async function close() {
+  if (!pool) return;
+  await pool.end();
+  pool = null;
+}
+
+module.exports = { init, getPool, reset, close };
