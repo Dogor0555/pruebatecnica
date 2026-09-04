@@ -1,274 +1,216 @@
-# 🚀 Guía de despliegue — Tasks App
+# 📋 Informe de despliegue — Tasks App
 
-Documento paso a paso para desplegar la aplicación completa (backend Express + frontend Next.js + Postgres en Neon) en servicios gratuitos.
-
-> **Estado actual:** el código está en https://github.com/Dogor0555/pruebatecnica. **No se ha desplegado todavía** — esta guía cubre todo el proceso para llevarlo a producción.
-
----
-
-## 1. Arquitectura objetivo
-
-```
-┌─────────────────────┐      HTTPS       ┌──────────────────────┐
-│   Vercel (free)     │ ───────────────► │  Render (free)       │
-│   Next.js 14        │                  │  Node + Express      │
-│   https://app.vercel│                  │  https://api.onrender│
-└─────────────────────┘                  └──────────┬───────────┘
-                                                    │ TLS (sslmode=require)
-                                                    ▼
-                                         ┌──────────────────────┐
-                                         │  Neon (free tier)    │
-                                         │  Postgres serverless │
-                                         └──────────────────────┘
-```
-
-| Capa     | Servicio                | Coste | Notas                                                |
-|----------|-------------------------|-------|------------------------------------------------------|
-| Frontend | Vercel (Hobby)          | $0    | Deploy automático desde `main`, sin cold start.      |
-| Backend  | Render (Web Service)    | $0    | Plan free duerme tras 15 min (cold start ~30 s).     |
-| DB       | Neon (Free)             | $0    | 0.5 GB, compute serverless con auto-suspend.        |
-
-Tiempo total estimado de despliegue: **10–15 minutos**.
+> Documento descriptivo (no instructivo) del despliegue real realizado.
+> Para una guía paso a paso de cómo hacerlo, ver la sección [Anexo](#anexo-guía-rápida) al final.
 
 ---
 
-## 2. Prerrequisitos
+## 1. Resumen ejecutivo
 
-- Cuenta en GitHub (ya tienes el repo).
-- Cuenta en [Neon](https://neon.tech) → proyecto `pruebatecnica` con dos bases de datos (`pruebatecnica` y `pruebatecnica_dev`).
-- Cuenta en [Render](https://render.com) — registro con GitHub.
-- Cuenta en [Vercel](https://vercel.com) — registro con GitHub.
-- Las URLs de conexión de Neon a mano:
-  - **Producción:** `postgresql://...neon.../pruebatecnica?sslmode=require`
-  - **Tests:** `postgresql://...neon.../pruebatecnica_dev?sslmode=require`
+| Capa       | Estado        | URL                                                              |
+|------------|---------------|------------------------------------------------------------------|
+| Backend    | ✅ Desplegado | `https://task-api-12bt.onrender.com`                             |
+| Frontend   | ⏳ Pendiente  | (a desplegar en Vercel)                                          |
+| Base datos | ✅ Conectada  | Neon Postgres — DB `pruebatecnica` (prod) y `pruebatecnica_dev` (tests) |
+
+**Stack en producción:** Node.js 20 (Express) + Docker + Render Web Service (plan Free) + Postgres serverless en Neon.
 
 ---
 
-## 3. Backend en Render
+## 2. Cronología del despliegue
 
-### 3.1 Crear el servicio
+| Fecha (CST)        | Hito                                                                  |
+|--------------------|------------------------------------------------------------------------|
+| 2026-09-04 (PM)    | Discusión inicial del plan: Vercel (frontend) + Render (backend) + Neon (DB). |
+| 2026-09-04 (PM)    | Push del repositorio a GitHub: `Dogor0555/pruebatecnica`.               |
+| 2026-09-04 (PM)    | Configuración de `render.yaml` para Infrastructure as Code.             |
+| 2026-09-04 (~13:42)| Primer deploy **fallido**: `failed to read dockerfile: open Dockerfile: no such file or directory`. |
+| 2026-09-04 (~13:43)| Segundo deploy **fallido** tras eliminar `dockerContext`.               |
+| 2026-09-04 (~13:45)| Tercer deploy **fallido** tras añadir `dockerfilePath: backend/Dockerfile`. |
+| 2026-09-04 (~13:46)| **Deploy exitoso** tras mover `Dockerfile` y `.dockerignore` a la raíz del repo. |
+| 2026-09-04 (~13:47)| Verificación end-to-end: `GET /health` → 200, `POST /api/tasks` → 201, persistencia confirmada en Neon. |
 
-1. Ir a https://dashboard.render.com.
-2. **New +** → **Web Service**.
-3. **Connect a repository:** seleccionar `Dogor0555/pruebatecnica`. Si Render no lo ve, autorizar el acceso desde *Account Settings → GitHub*.
-4. Configurar el formulario:
+**Tiempo total desde el primer intento hasta el deploy verde:** ~5 minutos.
 
-   | Campo            | Valor                                       |
-   |------------------|---------------------------------------------|
-   | Name             | `tasks-api` (o el que quieras)              |
-   | Region           | `Oregon (US West)` o el más cercano         |
-   | Branch           | `main`                                      |
-   | Root Directory   | `backend`                                   |
-   | Runtime          | `Docker` (autodetecta el `Dockerfile`)      |
-   | Instance Type    | `Free`                                      |
+---
 
-5. **Advanced → Environment Variables:**
+## 3. Lo que se desplegó
 
-   | Clave          | Valor                                                                 |
-   |----------------|-----------------------------------------------------------------------|
-   | `DATABASE_URL` | `postgresql://neondb_owner:***@ep-***.aws.neon.tech/pruebatecnica?sslmode=require&channel_binding=require` |
-   | `PORT`         | `3000`                                                                |
+### 3.1 Servicio backend (`tasks-api`)
 
-6. Pulsar **Create Web Service**. Iniciará el deploy (tarda unos 2-3 min la primera vez porque construye la imagen Docker).
+- **Plataforma:** Render Web Service.
+- **Plan:** Free (`Free`).
+- **Región:** Oregon (US West).
+- **Runtime:** Docker (build a partir del `Dockerfile` en la raíz del repo).
+- **Branch / commit:** `main` @ `02cc291` — `fix(deploy): mover Dockerfile a raíz del repo y simplificar render.yaml`.
+- **Auto-deploy:** habilitado (cada push a `main` redeploya).
+- **Health check:** `GET /health` → `200 { status: "ok" }`.
 
-### 3.2 Verificación
+### 3.2 Imagen Docker construida
 
-Cuando termine, Render te asignará una URL tipo:
+Stages:
+1. `node:20-alpine` — instalación de dependencias (`npm ci --omit=dev`).
+2. `node:20-alpine` — runner de producción con `node_modules`, `package.json` y `src/` copiados.
+
+**Notas sobre el Dockerfile:**
+
+- El `Dockerfile` vive en la **raíz del repo** (no en `backend/`). Esto fue necesario porque Render (con runtime Docker) busca el Dockerfile en la raíz del proyecto por defecto.
+- Los `COPY` usan el prefijo `backend/` porque el **build context** también es la raíz del repo:
+ ```dockerfile
+ COPY backend/package*.json ./
+ COPY backend/src ./src
+ ```
+- Multi-stage para que la imagen final no contenga devDependencies.
+
+### 3.3 Variables de entorno configuradas en Render
+
+| Clave          | Valor                                                                                              |
+|----------------|----------------------------------------------------------------------------------------------------|
+| `DATABASE_URL` | `postgresql://neondb_owner:npg_***@ep-winter-voice-avrqoszs-pooler.c-11.us-east-1.aws.neon.tech/pruebatecnica?sslmode=require&channel_binding=require` |
+| `PORT`         | `3000`                                                                                              |
+| `NODE_ENV`     | `production`                                                                                        |
+
+`DATABASE_URL` se inyectó como **Secret** desde el dashboard (no se almacena en `render.yaml`).
+
+### 3.4 Esquema de la base de datos
+
+La tabla `tasks` se crea automáticamente al arrancar el servicio si no existe (en `src/db/connection.js:38`):
+
+```sql
+CREATE TABLE IF NOT EXISTS tasks (
+  id           SERIAL       PRIMARY KEY,
+  title        TEXT         NOT NULL,
+  description  TEXT         NOT NULL DEFAULT '',
+  is_completed BOOLEAN      NOT NULL DEFAULT FALSE,
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+```
+
+---
+
+## 4. Problemas encontrados y cómo se resolvieron
+
+### 4.1 Render no encontraba el `Dockerfile`
+
+**Síntoma (3 deploys fallidos):**
 
 ```
-https://tasks-api-xxxx.onrender.com
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2B done
+#1 DONE 0.0s
+error: failed to solve: failed to read dockerfile: open Dockerfile: no such file or directory
 ```
 
-Comprobaciones rápidas desde otra terminal:
+**Causa raíz:** el repositorio tiene el código del backend en `backend/`, pero Render (Docker runtime, Blueprint) busca el `Dockerfile` en la **raíz del repo** por defecto. Ningún intento de `dockerfilePath` ni `rootDir` en `render.yaml` fue respetado por la cache de configuración de Render.
+
+**Solución aplicada (commit `02cc291`):**
+
+1. Mover `backend/Dockerfile` → `./Dockerfile` (raíz del repo).
+2. Mover `backend/.dockerignore` → `./.dockerignore`.
+3. Simplificar `render.yaml` eliminando `dockerfilePath` y `dockerContext` (defaults a raíz).
+4. Ajustar el Dockerfile para usar `COPY backend/...` ya que el build context es la raíz del repo.
+
+**Aprendizaje:** cuando Render (o cualquier plataforma similar) no acepta paths personalizados en su config, es más sencillo adaptarse a la convención de la plataforma que forzarla.
+
+### 4.2 Ninguno más relevante
+
+La conexión a Neon funcionó a la primera gracias al flag `sslmode=require` en la URL, que el código del pool de `pg` detecta automáticamente y activa SSL.
+
+---
+
+## 5. Verificación post-deploy
+
+Pruebas realizadas en vivo contra la URL pública:
 
 ```bash
-# Health
-curl https://tasks-api-xxxx.onrender.com/health
-# → {"status":"ok","uptime":...}
+# 1. Health check
+$ curl https://task-api-12bt.onrender.com/health
+{"status":"ok","uptime":38.076836741}
 
-# Swagger
-open https://tasks-api-xxxx.onrender.com/api/docs
+# 2. Crear tarea
+$ curl -X POST https://task-api-12bt.onrender.com/api/tasks \
+    -H "Content-Type: application/json" \
+    -d '{"title":"Desplegado en Render","description":"Verificacion en vivo contra Neon prod","isCompleted":false}'
+HTTP/1.1 201 Created
+{"data":{"id":1,"title":"Desplegado en Render", ...}}
 
-# Crear tarea
-curl -X POST https://tasks-api-xxxx.onrender.com/api/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Desplegado en Render"}'
-# → 201 con el recurso
+# 3. Listar
+$ curl https://task-api-12bt.onrender.com/api/tasks
+{"data":[{...}],"count":1}
 ```
 
-Si todo responde, **anota la URL del backend** — la necesitarás para Vercel.
+**Estado actual de la base de datos Neon prod (`pruebatecnica`):**
 
-> **Tip:** Render puede tardar hasta 1 minuto en construir la imagen Docker la primera vez (descarga `node:20-alpine` y `npm ci`). Revisa los **Logs** en el dashboard si se queda colgado.
-
----
-
-## 4. Frontend en Vercel
-
-### 4.1 Crear el proyecto
-
-1. Ir a https://vercel.com/new.
-2. **Import** del repo `Dogor0555/pruebatecnica`.
-3. Configurar:
-
-   | Campo              | Valor             |
-   |--------------------|------------------|
-   | Project Name       | `tasks-frontend` (o el que quieras) |
-   | Framework Preset   | Next.js (autodetectado) |
-   | Root Directory     | `frontend`       |
-
-4. **Environment Variables:**
-
-   | Clave                  | Valor                                                |
-   |------------------------|------------------------------------------------------|
-   | `NEXT_PUBLIC_API_URL`  | `https://tasks-api-xxxx.onrender.com` (la URL del backend) |
-
-5. Pulsar **Deploy**. Tarda ~1 min.
-
-### 4.2 Verificación
-
-Vercel te asignará una URL tipo:
-
-```
-https://tasks-frontend-xxxx.vercel.app
+```sql
+SELECT * FROM tasks;
+-- 1 | "Desplegado en Render" | "Verificacion en vivo contra Neon prod" | f | ...
 ```
 
-Abrela en el navegador. Deberías ver la UI. Al crear la primera tarea, el frontend hace `POST` a la API en Render y la guardará en Neon.
+La tarea `id=1` quedó persistida como prueba de vida del despliegue.
 
-**Verificación cruzada:**
+---
 
-```bash
-# La tarea creada en la UI debería aparecer en /api/tasks del backend
-curl https://tasks-api-xxxx.onrender.com/api/tasks
+## 6. URLs y endpoints expuestos
+
+Una vez desplegado, la API está disponible públicamente en:
+
+```
+https://task-api-12bt.onrender.com
 ```
 
----
-
-## 5. Anti cold-start (opcional pero recomendado)
-
-El plan free de Render duerme el servicio tras 15 min sin tráfico. La siguiente petición tarda ~30 s en "despertar". Para evitarlo, programa un ping cada 14 minutos a `/health`.
-
-### Opción A — UptimeRobot (gratis, web)
-
-1. https://uptimerobot.com → **Add New Monitor**.
-2. Monitor Type: `HTTP(s)`.
-3. URL: `https://tasks-api-xxxx.onrender.com/health`.
-4. Monitoring Interval: `14 minutes` (Vercel free permite hasta 50 monitores, Render no cuenta este ping como problema).
-
-### Opción B — cron-job.org (gratis, sin instalar nada)
-
-1. https://cron-job.org → registrarte.
-2. **Create Cronjob**:
-   - URL: `https://tasks-api-xxxx.onrender.com/health`
-   - Interval: cada 14 min
-3. Activar.
-
-### Opción C — GitHub Actions cada 14 min
-
-```yaml
-# .github/workflows/keepalive.yml
-name: Keep Render warm
-on:
-  schedule:
-    - cron: "*/14 * * * *"
-  workflow_dispatch:
-
-jobs:
-  ping:
-    runs-on: ubuntu-latest
-    steps:
-      - name: ping
-        run: curl -fsS https://tasks-api-xxxx.onrender.com/health
-```
+| Endpoint                              | Descripción                                  |
+|---------------------------------------|----------------------------------------------|
+| `GET  /health`                        | Health check → `200 { status: "ok" }`        |
+| `GET  /api/tasks`                     | Lista todas las tareas                       |
+| `GET  /api/tasks/{id}`                | Obtiene una tarea por id                     |
+| `POST /api/tasks`                     | Crea una tarea                               |
+| `PUT  /api/tasks/{id}`                | Actualiza una tarea                          |
+| `DELETE /api/tasks/{id}`              | Elimina una tarea                            |
+| `GET  /api/docs`                      | Swagger UI (interactivo)                     |
+| `GET  /api/docs.json`                 | OpenAPI 3.0.3 en JSON                        |
 
 ---
 
-## 6. CI / Tests (recomendado)
+## 7. Limitaciones conocidas (plan Free)
 
-Una vez desplegado el backend, conviene tener CI ejecutando los tests automáticamente. Ya hay un workflow en `.github/workflows/ci.yml` que solo necesita el secreto `TEST_DATABASE_URL`.
-
-### Configurar el secreto
-
-1. Ir a https://github.com/Dogor0555/pruebatecnica/settings/secrets/actions.
-2. **New repository secret**:
-   - Name: `TEST_DATABASE_URL`
-   - Value: tu URL de Neon apuntando a `pruebatecnica_dev`.
-3. Cada push a `main` o PR ejecutará los 13 tests contra la DB de Neon dev.
+| Limitación                                  | Impacto                                                | Mitigación                                              |
+|--------------------------------------------|--------------------------------------------------------|---------------------------------------------------------|
+| Cold start tras ~15 min de inactividad     | Primera petición tras inactividad tarda ~30-50 s       | `keepalive.yml` (cron cada 14 min) o UptimeRobot        |
+| 750 h/mes de cómputo                       | Suficiente para un solo servicio                        | N/A                                                     |
+| Disco efímero                               | Los datos en disco local se pierden en cada redeploy   | DB en Neon (no se ve afectado)                          |
+| Build cache limitado                       | Builds más lentos sin caché                             | N/A                                                     |
 
 ---
 
-## 7. Checklist final
+## 8. Pendiente
 
-- [ ] Repo clonado en local y pusheado a GitHub.
-- [ ] Dos DBs creadas: `pruebatecnica` y `pruebatecnica_dev`.
-- [ ] Render: Web Service creado con `DATABASE_URL` apuntando a `pruebatecnica`.
-- [ ] `/health` responde 200 en `https://tasks-api-xxxx.onrender.com`.
-- [ ] `POST /api/tasks` crea una tarea y se persiste en Neon.
-- [ ] Vercel: proyecto creado con `NEXT_PUBLIC_API_URL` apuntando al backend.
-- [ ] UI carga en `https://tasks-frontend-xxxx.vercel.app`.
-- [ ] (Opcional) Anti cold-start configurado.
-- [ ] (Opcional) GitHub Secret `TEST_DATABASE_URL` configurado → CI verde.
+- [ ] **Desplegar frontend en Vercel** (siguiente paso).
+- [ ] Configurar `BACKEND_URL` como secret en GitHub Actions para activar el workflow `keepalive.yml`.
+- [ ] Configurar `TEST_DATABASE_URL` como secret en GitHub Actions para ejecutar CI en cada push.
+- [ ] Eliminar la tarea de prueba `id=1` creada durante la verificación (opcional).
 
 ---
 
-## 8. Troubleshooting
+## Anexo: guía rápida
 
-| Problema                                         | Causa probable                                          | Solución                                                                 |
-|--------------------------------------------------|---------------------------------------------------------|--------------------------------------------------------------------------|
-| Render: `Cannot connect to DB`                   | `DATABASE_URL` mal copiada o sin `sslmode=require`.     | Comprobar la URL de Neon en el dashboard de Render → Environment.        |
-| Vercel: `Failed to fetch` en la UI               | `NEXT_PUBLIC_API_URL` apunta a localhost.               | Re-deploy con la variable correcta apuntando a Render.                  |
-| Render: 502 al primer GET tras 15 min            | Cold start normal del free tier.                        | Esperar 30 s o configurar keepalive (sección 5).                         |
-| Render: build falla con `Cannot find module 'pg'`| `node_modules` no instalado en la imagen.               | Confirmar que `Dockerfile` ejecuta `npm ci --omit=dev` en la etapa `deps`. |
-| CORS bloqueando peticiones desde Vercel          | Origen no permitido.                                   | Verificar que `src/app.js` tiene `cors()` montado antes de las rutas.    |
-| Neon: `password authentication failed`           | Credenciales rotadas.                                   | En Neon → *Project Settings → Reset password* y actualizar variable.     |
+(Resumen ultra-corto para repetir el deploy; la versión detallada está en los commits del repo.)
 
----
+### Backend en Render (Blueprint)
 
-## 9. Costes recurrentes
+1. `render.yaml` en la raíz del repo define el servicio.
+2. Render Dashboard → **New +** → **Blueprint** → conectar repo.
+3. Render lee `render.yaml` y crea `tasks-api`.
+4. Configurar `DATABASE_URL` como **Secret** en *Environment*.
+5. Deploy automático en cada push a `main`.
 
-Todo el stack es **$0/mes** dentro de los límites:
+### Frontend en Vercel (próximo paso)
 
-| Servicio | Límite free                              |
-|----------|------------------------------------------|
-| Vercel   | 100 GB bandwidth, builds ilimitados.     |
-| Render   | 750 h/mes (suficiente para 1 web free).  |
-| Neon     | 0.5 GB storage, 190 h compute / mes.      |
-
-Para un proyecto de examen / portfolio esto es más que suficiente.
+1. https://vercel.com/new → importar repo `Dogor0555/pruebatecnica`.
+2. **Root Directory:** `frontend`.
+3. **Environment Variable:** `NEXT_PUBLIC_API_URL=https://task-api-12bt.onrender.com`.
+4. Deploy.
 
 ---
 
-## 10. Tear-down
-
-Cuando quieras apagar todo:
-
-1. **Render**: Dashboard → servicio → **Settings → Delete Web Service**.
-2. **Vercel**: Project → **Settings → Delete Project**.
-3. **Neon**: Project → **Settings → Delete Project** (cuidado: borra los datos).
-
-El código sigue en GitHub para volver a desplegar cuando quieras.
-
----
-
-## 11. Próximos pasos (mejoras opcionales)
-
-- **Dominio custom:** comprar dominio (~10 USD/año) y conectarlo a Vercel + Render.
-- **HTTPS automático:** Render y Vercel lo gestionan, no hay que hacer nada.
-- **Migraciones reales:** añadir `node-pg-migrate` o `Knex` cuando la BD crezca.
-- **Auth:** añadir JWT o NextAuth cuando la app lo requiera.
-- **Observabilidad:** Render da métricas básicas; Sentry o Logtail para más detalle.
-
----
-
-## Anexo A — `render.yaml` (Infrastructure as Code)
-
-Si prefieres que Render cree el servicio automáticamente desde el repo, hay un archivo `render.yaml` en la raíz del proyecto. Para usarlo:
-
-1. Render Dashboard → **New +** → **Blueprint**.
-2. Apuntar al repo `Dogor0555/pruebatecnica`.
-3. Render detectará el `render.yaml` y creará el servicio con la configuración ahí definida.
-
-La variable `DATABASE_URL` tendrás que añadirla manualmente como **Secret** en el dashboard de Render (no debe ir en el YAML porque contiene credenciales).
-
----
-
-**Última revisión:** ver `git log` en el repo. Toda la infraestructura definida en este documento está versionada en `main`.
+**Generado automáticamente el 2026-09-04 tras el primer deploy exitoso en Render (commit `02cc291`).**
