@@ -6,11 +6,10 @@ services:
   - type: web
     name: tasks-api
     runtime: docker
-    rootDir: backend
     plan: free
     region: oregon
     branch: main
-    dockerfilePath: Dockerfile
+    dockerfilePath: backend/Dockerfile
     autoDeploy: true
     healthCheckPath: /health
     envVars:
