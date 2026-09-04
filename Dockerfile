@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.6
 #
-# Este Dockerfile asume que el build context es la RAÍZ del repo
-# (no la carpeta backend/). Esto es lo que espera Render cuando
-# dockerfilePath es relativo al repo root (backend/Dockerfile).
+# Build context: raíz del repo.
+# Render (Docker runtime) busca el Dockerfile en la raíz por defecto.
+# Los COPY usan el prefijo backend/ porque ahí vive el código del backend.
 
 FROM node:20-alpine AS deps
 WORKDIR /app
