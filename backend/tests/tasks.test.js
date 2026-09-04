@@ -138,6 +138,61 @@ describe('Tasks API', () => {
       expect(res.body.data.title).toBe('Tarea original');
     });
 
+    it('debe editar el title y description de una tarea', async () => {
+      const created = await request(app)
+        .post('/api/tasks')
+        .send({
+          title: 'Título viejo',
+          description: 'Descripción vieja',
+        });
+
+      const res = await request(app)
+        .put(`/api/tasks/${created.body.data.id}`)
+        .send({
+          title: 'Título nuevo',
+          description: 'Descripción nueva',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.title).toBe('Título nuevo');
+      expect(res.body.data.description).toBe('Descripción nueva');
+      // El campo updatedAt debe ser posterior (o igual) al createdAt
+      expect(new Date(res.body.data.updatedAt).getTime()).toBeGreaterThanOrEqual(
+        new Date(res.body.data.createdAt).getTime()
+      );
+    });
+
+    it('debe permitir editar solo el title sin tocar description', async () => {
+      const created = await request(app)
+        .post('/api/tasks')
+        .send({
+          title: 'Original',
+          description: 'No cambiar',
+        });
+
+      const res = await request(app)
+        .put(`/api/tasks/${created.body.data.id}`)
+        .send({ title: 'Solo cambia título' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.title).toBe('Solo cambia título');
+      expect(res.body.data.description).toBe('No cambiar');
+    });
+
+    it('debe permitir editar solo description sin tocar title', async () => {
+      const created = await request(app)
+        .post('/api/tasks')
+        .send({ title: 'Fijo', description: 'Vieja' });
+
+      const res = await request(app)
+        .put(`/api/tasks/${created.body.data.id}`)
+        .send({ description: 'Nueva descripción' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.title).toBe('Fijo');
+      expect(res.body.data.description).toBe('Nueva descripción');
+    });
+
     it('debe devolver 404 al intentar actualizar un id inexistente', async () => {
       const res = await request(app)
         .put('/api/tasks/99999')

@@ -237,6 +237,53 @@ body {
   gap: 4px;
 }
 
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-title {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  background: white;
+  color: var(--text);
+}
+
+.edit-title:focus {
+  border-color: var(--primary);
+}
+
+.edit-description {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: white;
+  color: var(--text);
+  min-height: 60px;
+  resize: vertical;
+}
+
+.edit-description:focus {
+  border-color: var(--primary);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .empty {
   text-align: center;
   padding: 32px 12px;

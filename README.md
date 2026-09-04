@@ -95,6 +95,83 @@ docker compose down
 
 ---
 
+## 🌐 Despliegue en producción
+
+| Capa        | Plataforma                | URL                                                |
+|-------------|---------------------------|----------------------------------------------------|
+| **Backend** | Render (Web Service, Free) | https://task-api-12bt.onrender.com                |
+| **Frontend** | Vercel (Next.js, Free)   | https://tasks-frontend-xxxx.vercel.app *(a desplegar)* |
+| **DB**      | Neon Postgres (Free)       | `pruebatecnica` (prod) + `pruebatecnica_dev` (tests) |
+| **CI/CD**   | GitHub Actions             | Tests en cada push + keepalive anti cold start     |
+
+### Probar el backend ya desplegado
+
+```bash
+# Health
+curl https://task-api-12bt.onrender.com/health
+
+# Crear tarea
+curl -X POST https://task-api-12bt.onrender.com/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Revisar deploy","description":"Test contra la URL pública"}'
+
+# Listar
+curl https://task-api-12bt.onrender.com/api/tasks
+
+# Editar (PUT permite cambiar title, description y/o isCompleted)
+curl -X PUT https://task-api-12bt.onrender.com/api/tasks/1 \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Título editado","isCompleted":true}'
+
+# Eliminar
+curl -X DELETE https://task-api-12bt.onrender.com/api/tasks/1
+
+# Swagger UI
+open https://task-api-12bt.onrender.com/api/docs
+```
+
+### Arquitectura
+
+```
+┌──────────────────────┐       HTTPS        ┌──────────────────────┐
+│  Vercel (Free)       │ ─────────────────► │  Render (Free)       │
+│  Next.js 14          │   CORS habilitado  │  Express 4 + Node 20 │
+│  tasks-frontend      │                    │  task-api            │
+└──────────────────────┘                    └──────────┬───────────┘
+                                                      │ TLS (sslmode=require)
+                                                      ▼
+                                            ┌──────────────────────┐
+                                            │  Neon (Free)         │
+                                            │  Postgres serverless │
+                                            └──────────────────────┘
+```
+
+### GitHub Actions
+
+Dos workflows en `.github/workflows/`:
+
+| Workflow         | Trigger                              | Qué hace                                                              |
+|------------------|--------------------------------------|------------------------------------------------------------------------|
+| `ci.yml`         | push / PR a `main`                   | `cd backend && npm ci && npm test` contra `TEST_DATABASE_URL` (Neon). |
+| `keepalive.yml`  | cron cada 14 min / manual            | `curl /health` del backend para evitar cold start del plan Free.       |
+
+Secrets necesarios en *Settings → Secrets → Actions*:
+- `TEST_DATABASE_URL`: URL de Neon apuntando a `pruebatecnica_dev`.
+- `BACKEND_URL`: `https://task-api-12bt.onrender.com` (opcional, para keepalive).
+
+### Limitaciones del plan Free
+
+- Render duerme el servicio tras 15 min de inactividad → cold start ~30–50 s. Mitigado con `keepalive.yml`.
+- Vercel: 100 GB bandwidth / mes, builds ilimitados.
+- Neon: 0.5 GB storage, 190 h compute / mes.
+
+### Documentación detallada
+
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Informe descriptivo del despliegue en producción (qué se hizo, problemas encontrados, verificación post-deploy).
+- **[backend/DEPLOYMENT_REPORT.md](./backend/DEPLOYMENT_REPORT.md)** — Versión extendida con docker, GitHub Actions, pruebas locales y enlaces para testers.
+
+---
+
 ## 🔧 Arranque manual (sin Docker)
 
 ### Backend
