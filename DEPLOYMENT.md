@@ -10,10 +10,10 @@
 | Capa       | Estado        | URL                                                              |
 |------------|---------------|------------------------------------------------------------------|
 | Backend    | ✅ Desplegado | `https://task-api-12bt.onrender.com`                             |
-| Frontend   | ⏳ Pendiente  | (a desplegar en Vercel)                                          |
+| Frontend   | ✅ Desplegado | `https://pruebatecnicamarcosbonilla.vercel.app`                  |
 | Base datos | ✅ Conectada  | Neon Postgres — DB `pruebatecnica` (prod) y `pruebatecnica_dev` (tests) |
 
-**Stack en producción:** Node.js 20 (Express) + Docker + Render Web Service (plan Free) + Postgres serverless en Neon.
+**Stack en producción:** Node.js 20 (Express) + Docker + Render Web Service (plan Free) + Next.js 14 + Vercel (plan Free) + Postgres serverless en Neon.
 
 ---
 
@@ -29,8 +29,9 @@
 | 2026-09-04 (~13:45)| Tercer deploy **fallido** tras añadir `dockerfilePath: backend/Dockerfile`. |
 | 2026-09-04 (~13:46)| **Deploy exitoso** tras mover `Dockerfile` y `.dockerignore` a la raíz del repo. |
 | 2026-09-04 (~13:47)| Verificación end-to-end: `GET /health` → 200, `POST /api/tasks` → 201, persistencia confirmada en Neon. |
+| 2026-09-04 (~14:XX)| Frontend desplegado en Vercel: `https://pruebatecnicamarcosbonilla.vercel.app`. |
 
-**Tiempo total desde el primer intento hasta el deploy verde:** ~5 minutos.
+**Tiempo total desde el primer intento hasta el deploy verde del backend:** ~5 minutos.
 
 ---
 
@@ -185,7 +186,7 @@ https://task-api-12bt.onrender.com
 
 ## 8. Pendiente
 
-- [ ] **Desplegar frontend en Vercel** (siguiente paso).
+- [x] ~~Desplegar frontend en Vercel~~ → hecho en `https://pruebatecnicamarcosbonilla.vercel.app`.
 - [ ] Configurar `BACKEND_URL` como secret en GitHub Actions para activar el workflow `keepalive.yml`.
 - [ ] Configurar `TEST_DATABASE_URL` como secret en GitHub Actions para ejecutar CI en cada push.
 - [ ] Eliminar la tarea de prueba `id=1` creada durante la verificación (opcional).
@@ -210,6 +211,8 @@ https://task-api-12bt.onrender.com
 2. **Root Directory:** `frontend`.
 3. **Environment Variable:** `NEXT_PUBLIC_API_URL=https://task-api-12bt.onrender.com`.
 4. Deploy.
+
+**Estado real:** desplegado en `https://pruebatecnicamarcosbonilla.vercel.app` → HTTP 200.
 
 ---
 

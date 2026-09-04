@@ -108,7 +108,7 @@ docker compose down
 | Capa         | Plataforma                  | URL                                                  |
 |--------------|-----------------------------|------------------------------------------------------|
 | **Backend**  | Render (Web Service, Free)  | https://task-api-12bt.onrender.com                   |
-| **Frontend** | Vercel (Next.js, Free)      | https://tasks-frontend-xxxx.vercel.app *(pendiente)* |
+| **Frontend** | Vercel (Next.js, Free)      | https://pruebatecnicamarcosbonilla.vercel.app |
 | **DB**       | Neon Postgres (Free)        | `pruebatecnica` (prod) + `pruebatecnica_dev` (tests) |
 | **CI/CD**    | GitHub Actions              | Tests en cada push + keepalive anti cold start       |
 

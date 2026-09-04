@@ -11,7 +11,7 @@
 | Capa                | Estado        | Plataforma                  | URL                                                              |
 |---------------------|---------------|-----------------------------|------------------------------------------------------------------|
 | **Backend**         | Desplegado    | Render (Web Service, Free)  | https://task-api-12bt.onrender.com                               |
-| **Frontend**        | Desplegado    | Vercel (Next.js, Free)      | https://tasks-frontend-xxxx.vercel.app *(a desplegar)*            |
+| **Frontend**        | Desplegado    | Vercel (Next.js, Free)      | https://pruebatecnicamarcosbonilla.vercel.app                     |
 | **Base de datos**   | Conectada     | Neon Postgres (Free)        | DB prod: `pruebatecnica` · DB tests: `pruebatecnica_dev`         |
 | **CI/CD**           | Configurado   | GitHub Actions              | `.github/workflows/ci.yml` + `keepalive.yml`                     |
 | **Contenedores**    | Definidos     | Docker (multi-stage)        | `Dockerfile` (raíz) + `frontend/Dockerfile`                     |
@@ -191,13 +191,21 @@ curl -X POST https://task-api-12bt.onrender.com/api/tasks \
 2. Configurar **Root Directory** = `frontend`.
 3. Agregar env var `NEXT_PUBLIC_API_URL` = URL del backend en Render.
 4. **Deploy** — Vercel construye y publica (~1 min).
-5. URL final: `https://tasks-frontend-xxxx.vercel.app`.
+5. URL final: `https://pruebatecnicamarcosbonilla.vercel.app`.
 
 ### 5.4 Verificación
 
 1. Abrir la URL de Vercel en el navegador.
 2. Crear una tarea desde el formulario.
 3. Verificar en `https://task-api-12bt.onrender.com/api/tasks` que la tarea aparece persistida.
+
+### 5.5 Resultado del deploy
+
+- **Commit desplegado:** `cfcebd9` en `main`.
+- **URL final:** `https://pruebatecnicamarcosbonilla.vercel.app` → HTTP 200.
+- **Variables de entorno:** `NEXT_PUBLIC_API_URL` = `https://task-api-12bt.onrender.com`.
+- **Tiempo de build:** ~1 min (Next.js 14 con App Router).
+- **Auto-deploy:** habilitado (cada push a `main` rebuilds).
 
 ---
 
@@ -309,7 +317,7 @@ docker compose up --build
 | **API desplegada (Render)**      | https://task-api-12bt.onrender.com                                        |
 | **Swagger UI (interactivo)**     | https://task-api-12bt.onrender.com/api/docs                               |
 | **OpenAPI JSON**                 | https://task-api-12bt.onrender.com/api/docs.json                          |
-| **Frontend desplegado (Vercel)** | https://tasks-frontend-xxxx.vercel.app *(a desplegar)*                     |
+| **Frontend desplegado (Vercel)** | https://pruebatecnicamarcosbonilla.vercel.app                              |
 | **Health check**                 | https://task-api-12bt.onrender.com/health                                 |
 | **Neon Dashboard**               | https://console.neon.tech                                                  |
 
