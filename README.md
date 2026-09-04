@@ -22,7 +22,7 @@ API REST y cliente web para la gestión de tareas (Tasks) — examen práctico d
 
 ```
 .
-├── backend                        # (este directorio raíz)
+├── backend/                       # API REST (Node + Express + Postgres/Neon)
 │   ├── src/
 │   │   ├── app.js                 # Construcción de la app Express
 │   │   ├── server.js              # Entry point
@@ -37,7 +37,7 @@ API REST y cliente web para la gestión de tareas (Tasks) — examen práctico d
 │   ├── tests/                     # Suite Jest + Supertest
 │   ├── Dockerfile
 │   └── package.json
-├── frontend/                      # Next.js (TS + App Router)
+├── frontend/                      # Cliente web Next.js (TS + App Router)
 │   ├── app/                       # Páginas y layout
 │   ├── components/                # TaskForm, TaskList, TaskItem
 │   ├── lib/api.ts                 # Cliente HTTP
@@ -45,7 +45,6 @@ API REST y cliente web para la gestión de tareas (Tasks) — examen práctico d
 │   ├── Dockerfile
 │   └── package.json
 ├── docker-compose.yml             # Orquestación backend + frontend
-├── .env.example
 └── README.md
 ```
 
@@ -102,6 +101,7 @@ docker compose down
 
 ```bash
 # Instalar
+cd backend
 npm install
 
 # Variables de entorno
@@ -179,10 +179,11 @@ Extras:
 
 ## 🧪 Pruebas automatizadas
 
-Las pruebas del backend viven en `tests/`. Requieren una segunda base de datos (también en Neon) para no contaminar la de producción.
+Las pruebas del backend viven en `backend/tests/`. Requieren una segunda base de datos (también en Neon) para no contaminar la de producción.
 
 ```bash
 # 1) Definir DB de tests
+cd backend
 cp .env.example .env.test       # editar TEST_DATABASE_URL apuntando a otra DB
 
 # 2) Correr
@@ -210,7 +211,7 @@ Tests:       13 passed, 13 total
 `.github/workflows/ci.yml` ejecuta en cada `push`/`PR`:
 
 1. `actions/setup-node@v4` con Node 20.
-2. `npm ci`.
+2. `cd backend && npm ci`.
 3. `npm test` (necesita el secreto `TEST_DATABASE_URL` en *Settings → Secrets → Actions*).
 
 ---

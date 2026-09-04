@@ -12,3 +12,7 @@ frontend/.next/
 frontend/out/
 .vscode/
 .idea/
+
+# Archivos de entorno del backend (no commitear)
+backend/.env
+backend/.env.test
