@@ -1,0 +1,33 @@
+{
+  "name": "tasks-api",
+  "version": "1.0.0",
+  "description": "REST API para gestión de tareas (Tasks). Node.js + Express + SQLite.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "jest --runInBand --detectOpenHandles --forceExit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "rest",
+    "api",
+    "tasks",
+    "express",
+    "sqlite"
+  ],
+  "author": "Marcos Bonilla",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.21.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}
