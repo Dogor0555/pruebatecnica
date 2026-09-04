@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.github
+tests
+coverage
+.env
+.env.test
+.env.local
+README.md
+Dockerfile
+.gitignore
+*.md
