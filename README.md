@@ -4,17 +4,17 @@ API REST y cliente web para la gestión de tareas (Tasks) — examen práctico d
 
 ## 🧱 Stack
 
-| Capa        | Tecnología                                                                 |
-|-------------|----------------------------------------------------------------------------|
-| Backend     | **Node.js 18+** + **Express 4**                                            |
-| Persistencia| **PostgreSQL** desplegado en **[Neon](https://neon.tech)** (serverless)    |
-| Driver DB   | `pg` (node-postgres) con `pg.Pool`                                          |
-| Frontend    | **Next.js 14** (App Router) + **TypeScript** + **SWR**                    |
-| Tests       | `jest` + `supertest` contra una segunda DB en Neon                         |
-| Docs API    | Swagger UI en `/api/docs`                                                   |
-| Orquestación| `docker compose` (backend + frontend)                                     |
+| Capa         | Tecnología                                                                 |
+|--------------|----------------------------------------------------------------------------|
+| Backend      | **Node.js 18+** + **Express 4**                                            |
+| Persistencia | **PostgreSQL** desplegado en **[Neon](https://neon.tech)** (serverless)    |
+| Driver DB    | `pg` (node-postgres) con `pg.Pool`                                          |
+| Frontend     | **Next.js 14** (App Router) + **TypeScript** + **SWR**                    |
+| Tests        | `jest` + `supertest` contra una segunda DB en Neon                         |
+| Docs API     | Swagger UI en `/api/docs`                                                   |
+| Orquestación | `docker compose` (backend + frontend)                                      |
 
-> Se eligió Node.js + Express porque es un stack ligero, ampliamente conocido y fácil de desplegar. Postgres + Neon se eligió por ser una base de datos relacional gestionada y de bajo costo, sin infraestructura productiva propia. Next.js con TypeScript es el estándar moderno para aplicaciones React con SSR/SSG y permite construir un cliente web que consume la API de forma tipada.
+> Node.js + Express fue elegido por tratarse de un stack ligero, ampliamente conocido y fácil de desplegar. Postgres + Neon fue seleccionado por ser una base de datos relacional gestionada y de bajo costo, sin infraestructura productiva propia. Next.js con TypeScript constituye el estándar moderno para aplicaciones React con SSR/SSG y permite construir un cliente web que consume la API de forma tipada.
 
 ---
 
@@ -56,7 +56,7 @@ API REST y cliente web para la gestión de tareas (Tasks) — examen práctico d
 └── README.md
 ```
 
-Separación de capas (backend): `routes → controllers → services → repositories → DB`.
+La separación de capas del backend sigue el flujo `routes → controllers → services → repositories → DB`.
 
 ---
 
@@ -64,36 +64,36 @@ Separación de capas (backend): `routes → controllers → services → reposit
 
 ### Requisitos
 
-- Docker + Docker Compose
-- Una base de datos PostgreSQL en [Neon](https://neon.tech) (o cualquier Postgres accesible). Como la BD es externa a Compose, **no** necesitas provisionar nada extra en Docker.
+- Docker + Docker Compose.
+- Una base de datos PostgreSQL en [Neon](https://neon.tech) (o cualquier Postgres accesible). Al ser externa a Compose, **no** se requiere provisionar nada extra en Docker.
 
-### 1. Configurar variables
+### 1. Configuración de variables
 
-Crea un archivo `.env` en la raíz (no commitear) con tu URL de Neon:
+El archivo `.env` se crea en la raíz del repo (no debe commitearse) con la URL de Neon:
 
 ```env
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/DB?sslmode=require
 ```
 
-> Si quieres, también puedes exportar `DATABASE_URL` antes de `docker compose up`.
+> Como alternativa, `DATABASE_URL` puede exportarse en el entorno antes de ejecutar `docker compose up`.
 
-### 2. Levantar todo
+### 2. Levantar los servicios
 
 ```bash
 docker compose up --build
 ```
 
-Esto levantará dos servicios:
+Quedan disponibles dos servicios:
 
-| Servicio  | Puerto host | URL                         |
-|-----------|--------------|-----------------------------|
-| Backend   | `3000`       | http://localhost:3000       |
-| Frontend  | `3001`       | http://localhost:3001       |
+| Servicio | Puerto host | URL                         |
+|----------|-------------|-----------------------------|
+| Backend  | `3000`      | http://localhost:3000       |
+| Frontend | `3001`      | http://localhost:3001       |
 
-- Backend Swagger UI → http://localhost:3000/api/docs
+- Swagger UI del backend → http://localhost:3000/api/docs
 - Frontend (cliente web) → **http://localhost:3001**
 
-El frontend hace las peticiones a la API en `http://localhost:3000` (configurable vía `NEXT_PUBLIC_API_URL` en `docker-compose.yml`). El backend lleva CORS habilitado para que el navegador pueda llamarlo.
+El frontend realiza las peticiones a la API en `http://localhost:3000` (configurable mediante `NEXT_PUBLIC_API_URL` en `docker-compose.yml`). El backend expone CORS habilitado para que el navegador pueda llamarlo desde otro origen.
 
 ### 3. Bajar los servicios
 
@@ -105,14 +105,14 @@ docker compose down
 
 ## 🌐 Despliegue en producción
 
-| Capa        | Plataforma                | URL                                                |
-|-------------|---------------------------|----------------------------------------------------|
-| **Backend** | Render (Web Service, Free) | https://task-api-12bt.onrender.com                |
-| **Frontend** | Vercel (Next.js, Free)   | https://tasks-frontend-xxxx.vercel.app *(a desplegar)* |
-| **DB**      | Neon Postgres (Free)       | `pruebatecnica` (prod) + `pruebatecnica_dev` (tests) |
-| **CI/CD**   | GitHub Actions             | Tests en cada push + keepalive anti cold start     |
+| Capa         | Plataforma                  | URL                                                  |
+|--------------|-----------------------------|------------------------------------------------------|
+| **Backend**  | Render (Web Service, Free)  | https://task-api-12bt.onrender.com                   |
+| **Frontend** | Vercel (Next.js, Free)      | https://tasks-frontend-xxxx.vercel.app *(pendiente)* |
+| **DB**       | Neon Postgres (Free)        | `pruebatecnica` (prod) + `pruebatecnica_dev` (tests) |
+| **CI/CD**    | GitHub Actions              | Tests en cada push + keepalive anti cold start       |
 
-### Probar el backend ya desplegado
+### Verificación del backend ya desplegado
 
 ```bash
 # Health
@@ -156,27 +156,27 @@ open https://task-api-12bt.onrender.com/api/docs
 
 ### GitHub Actions
 
-Dos workflows en `.github/workflows/`:
+Existen dos workflows en `.github/workflows/`:
 
-| Workflow         | Trigger                              | Qué hace                                                              |
-|------------------|--------------------------------------|------------------------------------------------------------------------|
-| `ci.yml`         | push / PR a `main`                   | `cd backend && npm ci && npm test` contra `TEST_DATABASE_URL` (Neon). |
-| `keepalive.yml`  | cron cada 14 min / manual            | `curl /health` del backend para evitar cold start del plan Free.       |
+| Workflow        | Trigger                   | Acción                                                                          |
+|-----------------|---------------------------|---------------------------------------------------------------------------------|
+| `ci.yml`        | push / PR a `main`        | `cd backend && npm ci && npm test` contra `TEST_DATABASE_URL` (Neon).          |
+| `keepalive.yml` | cron cada 14 min / manual | `curl /health` al backend para evitar el cold start del plan Free.              |
 
-Secrets necesarios en *Settings → Secrets → Actions*:
+Secrets requeridos en *Settings → Secrets → Actions*:
 - `TEST_DATABASE_URL`: URL de Neon apuntando a `pruebatecnica_dev`.
-- `BACKEND_URL`: `https://task-api-12bt.onrender.com` (opcional, para keepalive).
+- `BACKEND_URL`: `https://task-api-12bt.onrender.com` (opcional, activa el keepalive).
 
 ### Limitaciones del plan Free
 
-- Render duerme el servicio tras 15 min de inactividad → cold start ~30–50 s. Mitigado con `keepalive.yml`.
-- Vercel: 100 GB bandwidth / mes, builds ilimitados.
-- Neon: 0.5 GB storage, 190 h compute / mes.
+- Render duerme el servicio tras 15 min de inactividad → cold start de ~30–50 s. Se mitiga con `keepalive.yml`.
+- Vercel: 100 GB de bandwidth / mes y builds ilimitados.
+- Neon: 0.5 GB de storage y 190 h de compute / mes.
 
 ### Documentación detallada
 
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Informe descriptivo del despliegue en producción (qué se hizo, problemas encontrados, verificación post-deploy).
-- **[backend/DEPLOYMENT_REPORT.md](./backend/DEPLOYMENT_REPORT.md)** — Versión extendida con docker, GitHub Actions, pruebas locales y enlaces para testers.
+- **[backend/DEPLOYMENT_REPORT.md](./backend/DEPLOYMENT_REPORT.md)** — Versión extendida con Docker, GitHub Actions, pruebas locales y enlaces para testers.
 
 ---
 
@@ -185,20 +185,20 @@ Secrets necesarios en *Settings → Secrets → Actions*:
 ### Backend
 
 ```bash
-# Instalar
+# Instalación de dependencias
 cd backend
 npm install
 
 # Variables de entorno
-cp .env.example .env       # editar con tu DATABASE_URL
+cp .env.example .env       # editar con la URL de Neon
 
-# Arrancar
+# Arranque
 npm run dev                # con --watch
 # o
 npm start                  # producción
 ```
 
-Disponible en `http://localhost:3000`.
+La API queda disponible en `http://localhost:3000`.
 
 ### Frontend
 
@@ -208,21 +208,21 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:3000 npm run dev
 ```
 
-Disponible en `http://localhost:3000` (Next.js). El navegador abrirá la UI y consumirá la API en el puerto 3000.
+El cliente web queda disponible en `http://localhost:3000`. El navegador abre la UI y consume la API en el mismo puerto.
 
 ---
 
 ## 📡 Endpoints (backend)
 
-| Método | Ruta                | Descripción                          | Códigos |
-|--------|---------------------|--------------------------------------|---------|
-| GET    | `/api/tasks`        | Lista todas las tareas               | 200     |
-| GET    | `/api/tasks/{id}`   | Obtiene una tarea por id             | 200/400/404 |
-| POST   | `/api/tasks`        | Crea una tarea                       | 201/400 |
-| PUT    | `/api/tasks/{id}`   | Actualiza una tarea existente        | 200/400/404 |
-| DELETE | `/api/tasks/{id}`   | Elimina una tarea                    | 204/400/404 |
+| Método | Ruta              | Descripción                  | Códigos         |
+|--------|-------------------|------------------------------|-----------------|
+| GET    | `/api/tasks`      | Lista todas las tareas       | 200             |
+| GET    | `/api/tasks/{id}` | Obtiene una tarea por id     | 200/400/404     |
+| POST   | `/api/tasks`      | Crea una tarea               | 201/400         |
+| PUT    | `/api/tasks/{id}` | Actualiza una tarea existente| 200/400/404     |
+| DELETE | `/api/tasks/{id}` | Elimina una tarea            | 204/400/404     |
 
-Extras:
+Endpoints adicionales:
 
 - `GET /health` → `200 { status: 'ok' }`
 - `GET /api/docs` → Swagger UI
@@ -243,10 +243,10 @@ Extras:
 
 ### Validaciones
 
-- `title` obligatorio y no puede ser cadena vacía.
-- `description`, si se envía, debe ser string.
-- `isCompleted`, si se envía, debe ser booleano.
-- En `PUT` todos los campos son opcionales, pero `title` debe ser válido si se incluye.
+- `title` es obligatorio y no puede ser cadena vacía.
+- `description`, cuando se envía, debe ser string.
+- `isCompleted`, cuando se envía, debe ser booleano.
+- En `PUT` todos los campos son opcionales; cuando se incluye `title`, debe ser válido.
 
 ### Errores (formato JSON)
 
@@ -264,52 +264,52 @@ Extras:
 
 ## 🧪 Pruebas automatizadas
 
-Las pruebas del backend viven en `backend/tests/`. Requieren una segunda base de datos (también en Neon) para no contaminar la de producción.
+Las pruebas del backend se encuentran en `backend/tests/`. Requieren una segunda base de datos (también en Neon) para no contaminar la de producción.
 
 ```bash
-# 1) Definir DB de tests
+# 1) Definir la DB de tests
 cd backend
 cp .env.example .env.test       # editar TEST_DATABASE_URL apuntando a otra DB
 
-# 2) Correr
+# 2) Ejecutar la suite
 npm test
 ```
 
-Suite (13 casos):
+Casos cubiertos (16 en total):
 
 - `POST /api/tasks` — creación exitosa (201), `title` vacío (400), `title` ausente (400), JSON inválido (400).
 - `GET /api/tasks` — listado (200).
 - `GET /api/tasks/:id` — éxito (200), id inexistente (404), id no numérico (400).
-- `PUT /api/tasks/:id` — actualización parcial (200), id inexistente (404), `title` vacío (400).
+- `PUT /api/tasks/:id` — actualización parcial (200), edición de `title` y `description`, edición de `title` preservando `description`, edición de `description` preservando `title`, id inexistente (404), `title` vacío (400).
 - `DELETE /api/tasks/:id` — éxito (204 + 404 al volver a pedirlo), id inexistente (404).
 
 Resultado esperado:
 
 ```
-Tests:       13 passed, 13 total
+Tests:       16 passed, 16 total
 ```
 
 ---
 
 ## 🛠️ CI (GitHub Actions)
 
-`.github/workflows/ci.yml` ejecuta en cada `push`/`PR`:
+El workflow `.github/workflows/ci.yml` se ejecuta en cada `push` o `PR`:
 
 1. `actions/setup-node@v4` con Node 20.
 2. `cd backend && npm ci`.
-3. `npm test` (necesita el secreto `TEST_DATABASE_URL` en *Settings → Secrets → Actions*).
+3. `npm test` (requiere el secreto `TEST_DATABASE_URL` en *Settings → Secrets → Actions*).
 
-Hay un segundo workflow `.github/workflows/keepalive.yml` que hace ping a `/health` cada 14 min para evitar el cold start del backend en Render (configurable vía secret `BACKEND_URL`).
+Adicionalmente, `.github/workflows/keepalive.yml` realiza un ping a `/health` cada 14 minutos para evitar el cold start del backend en Render (configurable mediante el secreto `BACKEND_URL`).
 
 ---
 
 ## 🚀 Despliegue
 
-La guía paso a paso para desplegar en **Vercel + Render + Neon** (todo free) está en **[DEPLOYMENT.md](./DEPLOYMENT.md)**. Cubre:
+La guía paso a paso para desplegar en **Vercel + Render + Neon** (todo free) se encuentra en **[DEPLOYMENT.md](./DEPLOYMENT.md)**. Cubre los siguientes puntos:
 
-- Crear el servicio en Render con `render.yaml` o manualmente.
-- Crear el proyecto en Vercel apuntando a `frontend/`.
-- Configurar `DATABASE_URL` y `NEXT_PUBLIC_API_URL`.
+- Creación del servicio en Render con `render.yaml` o manualmente.
+- Creación del proyecto en Vercel apuntando a `frontend/`.
+- Configuración de `DATABASE_URL` y `NEXT_PUBLIC_API_URL`.
 - Anti cold-start con GitHub Actions o UptimeRobot.
 - Troubleshooting de los errores más comunes.
 
@@ -326,12 +326,16 @@ docs: agregar README, Swagger/OpenAPI y Dockerfile
 ci: agregar GitHub Actions para ejecutar pruebas en cada push
 feat(backend): agregar middleware CORS para permitir consumo desde el frontend
 feat(frontend): cliente Next.js 14 (TS + App Router) con CRUD contra la API
+refactor: mover backend a carpeta backend/
+feat(frontend): edicion inline de title y description en TaskItem
+docs: agregar DEPLOYMENT.md y DEPLOYMENT_REPORT.md con informe de despliegue
+docs: actualizar README en tercera persona
 ```
 
 ---
 
 ## 🔐 Notas de seguridad
 
-- `.env`, `.env.test` y cualquier archivo con credenciales reales está en `.gitignore` y **no debe commitearse**.
-- `.env.example` es solo una plantilla sin secretos.
-- En Docker, la URL de Neon se inyecta vía variable de entorno (no se hardcodea en la imagen).
+- `.env`, `.env.test` y cualquier archivo con credenciales reales están listados en `.gitignore` y **no deben commitearse**.
+- `.env.example` es únicamente una plantilla sin secretos.
+- En Docker, la URL de Neon se inyecta mediante variable de entorno y nunca se hardcodea en la imagen.
